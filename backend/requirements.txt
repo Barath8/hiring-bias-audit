@@ -1,0 +1,28 @@
+# Backend API
+fastapi
+uvicorn
+
+# ML & Data
+scikit-learn
+pandas
+numpy
+
+# Model serialization
+joblib
+
+# MLOps - Experiment Tracking
+mlflow
+
+# MLOps - Data Versioning
+dvc
+
+# Monitoring
+prometheus-client
+
+# Pipeline 
+apache-airflow
+
+# Utilities
+python-multipart
+pydantic
+PyPDF2

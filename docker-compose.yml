@@ -1,4 +1,5 @@
 services:
+
   backend:
     build: ./backend
     ports:
@@ -8,25 +9,46 @@ services:
     build: ./frontend
     ports:
       - "8501:8501"
-  
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+
   airflow:
     build: ./airflow
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
     ports:
       - "8080:8080"
-    environment:
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
     command: webserver
 
   airflow-scheduler:
     build: ./airflow
     depends_on:
       - airflow
+      - postgres
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
     command: scheduler
 
   mlflow:
     build: ./mlflow
     ports:
       - "5000:5000"
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -34,6 +56,7 @@ services:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+
   grafana:
     build: ./monitoring/grafana
     container_name: grafana
