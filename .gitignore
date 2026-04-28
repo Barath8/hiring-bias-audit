@@ -82,10 +82,7 @@ docker-compose.override.yml
 # ==============================
 .streamlit/secrets.toml
 
-# ==============================
-# 🧾 Jupyter (if used)
-# ==============================
-.ipynb_checkpoints/
+data
 
 # ==============================
 # 💻 OS Files
