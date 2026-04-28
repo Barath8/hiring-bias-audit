@@ -1,0 +1,36 @@
+name: MLOps CI
+
+on: [push]
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.10
+
+    - name: Install deps
+      run: |
+        pip install -r backend/requirements.txt
+        pip install mlflow dvc pytest
+
+    - name: Run DVC Pipeline
+      run: |
+        dvc repro || true
+
+    - name: Train Model
+      run: python model/train.py
+
+    - name: Run Tests
+      run: pytest backend || true
+
+    - name: API Test
+      run: |
+        uvicorn backend.main:app &
+        sleep 5
+        curl http://localhost:8000/health

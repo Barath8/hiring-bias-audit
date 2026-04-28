@@ -1,0 +1,6 @@
+# Force LF for all files
+* text=auto eol=lf
+
+# Or specifically for Docker/Scripts
+Dockerfile text eol=lf
+*.sh text eol=lf

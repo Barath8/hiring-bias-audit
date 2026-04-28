@@ -1,0 +1,107 @@
+# ==============================
+# 🐍 Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+myenv/
+.venv/
+
+# ==============================
+# 📦 Packaging
+# ==============================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==============================
+# 🧪 Testing
+# ==============================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==============================
+# 📊 MLflow
+# ==============================
+mlruns/
+mlflow.db
+
+# ==============================
+# 📦 DVC (IMPORTANT)
+# ==============================
+# Track data with DVC, not Git
+data/raw/*
+data/processed/*
+!data/.gitkeep
+
+# Ignore large model files (tracked via DVC if needed)
+*.pkl
+*.joblib
+
+# ==============================
+# 📂 Logs & Runtime
+# ==============================
+*.log
+logs/
+*.out
+
+# ==============================
+# 📊 Prometheus & Monitoring
+# ==============================
+*.db
+prometheus_data/
+
+# ==============================
+# 📈 Grafana
+# ==============================
+grafana_data/
+
+# ==============================
+# 🌀 Airflow
+# ==============================
+airflow/logs/
+airflow/airflow.db
+airflow/unittests.cfg
+
+# ==============================
+# 🐳 Docker
+# ==============================
+*.env
+.env
+docker-compose.override.yml
+
+# ==============================
+# 🌐 Streamlit
+# ==============================
+.streamlit/secrets.toml
+
+# ==============================
+# 🧾 Jupyter (if used)
+# ==============================
+.ipynb_checkpoints/
+
+# ==============================
+# 💻 OS Files
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# 🔑 IDE / Editor
+# ==============================
+.vscode/
+.idea/
+
+# ==============================
+# 📄 Misc
+# ==============================
+*.tmp
+*.bak
+*.swp
