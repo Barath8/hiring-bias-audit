@@ -29,3 +29,4 @@ apache-airflow
 # Utilities
 python-multipart
 pydantic
+PyPDF2

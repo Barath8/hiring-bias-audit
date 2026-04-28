@@ -3,25 +3,42 @@ import requests
 
 st.title("Hiring Bias Audit System")
 
-text = st.text_area("Paste Resume")
+# 🔹 Upload PDF
+uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
-if st.button("Analyze"):
-    res = requests.post(
-        "http://localhost:8000/predict",
-        json={"text": text}
-    ).json()
+if uploaded_file is not None:
 
-    st.write("Prediction:", res["prediction"])
+    if st.button("Analyze"):
+        try:
+            # 🔹 Send PDF to backend
+            files = {
+                "file": (uploaded_file.name, uploaded_file, "application/pdf")
+            }
 
-    if res["bias_flag"]:
-        st.error("⚠️ Bias Detected")
-    else:
-        st.success("No Bias Detected")
+            res = requests.post(
+                "http://localhost:8000/predict",
+                files=files
+            ).json()
 
-    # Feedback
-    feedback = st.radio("Was this fair?", ["Yes", "No"])
+            # 🔹 Handle errors safely
+            if "error" in res:
+                st.error(res["error"])
+            else:
+                st.write("Prediction:", res["prediction"])
 
-    if st.button("Submit Feedback"):
-        with open("feedback.csv", "a") as f:
-            f.write(f"{text},{feedback}\n")
-        st.success("Feedback recorded")
+                if res["bias_flag"]:
+                    st.error("⚠️ Bias Detected")
+                else:
+                    st.success("No Bias Detected")
+
+                # 🔹 Feedback
+                feedback = st.radio("Was this fair?", ["Yes", "No"])
+
+                if st.button("Submit Feedback"):
+                    with open("feedback.csv", "a") as f:
+                        f.write(f"{uploaded_file.name},{feedback}\n")
+
+                    st.success("Feedback recorded")
+
+        except Exception as e:
+            st.error(f"Error: {str(e)}")

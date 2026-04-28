@@ -5,6 +5,7 @@ def validate_resume(parsed):
         return False, "Education missing"
     return True, "Valid"
 
+
 def preprocess(parsed):
     skills = " ".join(parsed["skills"])
     education = " ".join(parsed["education"])

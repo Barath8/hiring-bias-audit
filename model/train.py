@@ -1,14 +1,30 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
+import mlflow
+import mlflow.sklearn
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 
-X = ["good python developer", "bad communication"]
-y = [1, 0]
+mlflow.set_experiment("hiring-bias")
 
-vec = TfidfVectorizer()
-X_vec = vec.fit_transform(X)
+df = pd.read_csv("data/processed/train.csv")
 
-model = RandomForestClassifier()
-model.fit(X_vec, y)
+X = df["text"]
+y = df["label"]
 
-pickle.dump(model, open("model/model.pkl", "wb"))
+with mlflow.start_run():
+    vec = TfidfVectorizer()
+    X_vec = vec.fit_transform(X)
+
+    model = RandomForestClassifier()
+    model.fit(X_vec, y)
+
+    acc = model.score(X_vec, y)
+
+    mlflow.log_metric("accuracy", acc)
+
+    # ✅ Save BOTH
+    pickle.dump(model, open("model/model.pkl", "wb"))
+    pickle.dump(vec, open("model/vectorizer.pkl", "wb"))
+
+print("Model trained")

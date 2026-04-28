@@ -1,58 +1,88 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
 import pickle
-from metrics import REQUESTS, ERRORS, BIAS
-
-from parser import parse_resume
-from preprocess import validate_resume, preprocess
-
+from fastapi import UploadFile, File
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from backend.metrics import REQUESTS, ERRORS, BIAS
+from backend.parser import parse_resume
+from backend.preprocess import validate_resume, preprocess
 app = FastAPI()
 
-model = pickle.load(open("model/model.pkl", "rb"))
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    model = pickle.load(open(os.path.join(BASE_DIR, "model/model.pkl"), "rb"))
+    vectorizer = pickle.load(open(os.path.join(BASE_DIR, "model/vectorizer.pkl"), "rb"))
+except Exception as e:
+    print("Model loading failed:", e)
+    model = None
+
 
 class Resume(BaseModel):
     text: str
 
-def predict(text):
-    return model.predict([text])[0]
 
+def predict(text):
+    if model is None:
+        raise Exception("Model not loaded")
+
+    text_vec = vectorizer.transform([text])  # ✅ transform
+    return model.predict(text_vec)[0]
+
+
+# ✅ Health check
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
+
+# ✅ Prometheus metrics endpoint
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+# ✅ Main API
 @app.post("/predict")
-def predict_resume(resume: Resume):
-    # 🔹 Parse
-    parsed = parse_resume(resume.text)
+async def predict_resume(file: UploadFile = File(...)):
+    try:
+        REQUESTS.inc()
 
-    # 🔹 Validate
-    valid, msg = validate_resume(parsed)
-    if not valid:
-        return {"error": msg}
+        pdf_bytes = await file.read()
 
-    # 🔹 Preprocess
-    clean_text = preprocess(parsed)
+        # 🔹 Parse PDF
+        parsed = parse_resume(pdf_bytes, is_pdf=True)
 
-    # 🔹 Base Prediction
-    base_pred = predict(clean_text)
+        # 🔹 Validate
+        valid, msg = validate_resume(parsed)
+        if not valid:
+            ERRORS.inc()
+            return {"error": msg}
 
-    # 🔹 Bias Simulation
-    male_text = resume.text.replace("She", "He")
-    female_text = resume.text.replace("He", "She")
+        clean_text = preprocess(parsed)
+        base_pred = predict(clean_text)
 
-    parsed_m = parse_resume(male_text)
-    parsed_f = parse_resume(female_text)
+        # 🔹 Bias Simulation
+        text = parsed["text"]
 
-    pred_m = predict(preprocess(parsed_m))
-    pred_f = predict(preprocess(parsed_f))
+        male_text = text.replace("She", "He")
+        female_text = text.replace("He", "She")
 
-    bias = abs(pred_m - pred_f)
-    
-    BIAS.set(bias)
+        pred_m = predict(preprocess(parse_resume(male_text)))
+        pred_f = predict(preprocess(parse_resume(female_text)))
 
-    return {
-        "prediction": int(base_pred),
-        "bias_score": float(bias),
-        "bias_flag": bias > 0.2,
-        "parsed_data": parsed
-    }
+        bias = abs(pred_m - pred_f)
+        BIAS.set(bias)
+
+        return {
+            "prediction": int(base_pred),
+            "bias_score": float(bias),
+            "bias_flag": bias > 0.2,
+            "parsed_data": parsed
+        }
+
+    except Exception as e:
+        ERRORS.inc()
+        return {"error": str(e)}

@@ -3,6 +3,7 @@ stages:
     cmd: python model/preprocess.py
     deps:
       - model/preprocess.py
+      - backend/parser.py
     outs:
       - data/processed/
 
