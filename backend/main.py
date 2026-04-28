@@ -12,9 +12,13 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+MODEL_PATH = os.path.join(BASE_DIR, "model", "model.pkl")
+VEC_PATH = os.path.join(BASE_DIR, "model", "vectorizer.pkl")
+
 try:
-    model = pickle.load(open(os.path.join(BASE_DIR, "model/model.pkl"), "rb"))
-    vectorizer = pickle.load(open(os.path.join(BASE_DIR, "model/vectorizer.pkl"), "rb"))
+    model = pickle.load(open(MODEL_PATH, "rb"))
+    vectorizer = pickle.load(open(VEC_PATH, "rb"))
+    print("Model loaded ✅")
 except Exception as e:
     print("Model loading failed:", e)
     model = None
@@ -51,11 +55,8 @@ async def predict_resume(file: UploadFile = File(...)):
         REQUESTS.inc()
 
         pdf_bytes = await file.read()
-
-        # 🔹 Parse PDF
         parsed = parse_resume(pdf_bytes, is_pdf=True)
 
-        # 🔹 Validate
         valid, msg = validate_resume(parsed)
         if not valid:
             ERRORS.inc()
@@ -64,14 +65,11 @@ async def predict_resume(file: UploadFile = File(...)):
         clean_text = preprocess(parsed)
         base_pred = predict(clean_text)
 
-        # 🔹 Bias Simulation
-        text = parsed["text"]
+        male_text = clean_text.replace("she", "he")
+        female_text = clean_text.replace("he", "she")
 
-        male_text = text.replace("She", "He")
-        female_text = text.replace("He", "She")
-
-        pred_m = predict(preprocess(parse_resume(male_text)))
-        pred_f = predict(preprocess(parse_resume(female_text)))
+        pred_m = predict(male_text)
+        pred_f = predict(female_text)
 
         bias = abs(pred_m - pred_f)
         BIAS.set(bias)

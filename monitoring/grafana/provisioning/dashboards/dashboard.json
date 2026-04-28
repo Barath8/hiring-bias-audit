@@ -1,0 +1,83 @@
+{
+    "annotations": { "list": [] },
+    "editable": true,
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Total API Requests",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [{ "expr": "requests_total", "refId": "A" }],
+        "options": {
+          "reduceOptions": { "calcs": ["last"], "values": false },
+          "orientation": "horizontal"
+        }
+      },
+      {
+        "type": "stat",
+        "title": "Error Count",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [{ "expr": "errors_total", "refId": "B" }],
+        "options": {
+          "reduceOptions": { "calcs": ["last"], "values": false }
+        }
+      },
+      {
+        "type": "gauge",
+        "title": "Current Bias Score",
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "targets": [{ "expr": "bias_score", "refId": "C" }],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "orange", "value": 0.2 },
+                { "color": "red", "value": 0.5 }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "title": "API Traffic (Requests/sec)",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "rate(requests_total[1m])",
+            "refId": "D"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "title": "Bias Score Trend",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "bias_score",
+            "refId": "E"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "title": "Error Rate",
+        "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+        "targets": [
+          {
+            "expr": "rate(errors_total[1m])",
+            "refId": "F"
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 36,
+    "title": "Hiring Bias Audit Dashboard",
+    "version": 2,
+    "refresh": "5s",
+    "time": { "from": "now-15m", "to": "now" }
+  }
